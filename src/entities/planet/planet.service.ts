@@ -1,0 +1,108 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Planet } from './planet.entity';
+import { Repository } from 'typeorm';
+import { UpdatePlanetDto } from './dto/planet-update.dto';
+import { PlanetPayload } from './payload/planer-create.payload';
+
+/**
+ *class for working with planet entity
+ */
+@Injectable()
+export class PlanetService {
+  constructor(@InjectRepository(Planet) private planetRepository: Repository<Planet>) {}
+
+  /**
+   * the function gets all records in database from planets table
+   * @returns array of entities planets sorted by id growing
+   */
+  async getAll(): Promise<Planet[]> {
+    return await this.planetRepository.find({
+      order: { id: 'ASC' },
+      relations: ['residents', 'films'],
+      select: {
+        residents: { id: true, name: true },
+        films: { id: true, title: true },
+      },
+    });
+  }
+
+  /**
+   * function gets one records in database from planets table, if id mathc
+   * @param id planet id
+   * @returns planet entity if id exist in database, null if no id-match
+   */
+  async getOne(id: number): Promise<Planet | null> {
+    return await this.planetRepository.findOne({
+      where: { id },
+      relations: ['residents', 'films'],
+      select: {
+        residents: { id: true, name: true },
+        films: { id: true, title: true },
+      },
+    });
+  }
+
+  /**
+   * function return several records in database from planets table,
+   * if pagination parameters are not specified, default parameters are used
+   * @param page page numebr
+   * @param limit number of objects on page
+   * @returns array of films entity
+   */
+  async getSeveral(page: number, limit: number): Promise<Planet[]> {
+    const skip = (page - 1) * limit;
+    return await this.planetRepository.find({
+      skip: skip,
+      take: limit,
+      order: { id: 'ASC' },
+      relations: ['residents', 'films'],
+      select: {
+        residents: { id: true, name: true },
+        films: { id: true, title: true },
+      },
+    });
+  }
+
+  /**
+   *function creates a new instance of the Planets class.
+   * First, the received input parameters are unpacked, an images array is added to them,
+   * and a new instance of the Planet class is created.
+   * Then the instance is written to the database.
+   * @param planet object with new planet data
+   */
+  async create(peyload: PlanetPayload): Promise<Planet> {
+    const newPlanet = this.planetRepository.create(peyload);
+
+    return await this.planetRepository.save(newPlanet);
+  }
+
+  /**
+   * functio changes data in a record in the planet table.
+   * data replacement is performed by unpacking the record found in the database and the input parameter
+   * @param id planet id
+   * @param updateDto object with fields to be replaced
+   * @returns object with replaced fields, null if no record with the matching id was found
+   */
+  async update(id: number, updateDto: UpdatePlanetDto): Promise<Planet | null> {
+    const existing = await this.planetRepository.findOneBy({ id });
+    if (!existing) return null;
+
+    const update = {
+      ...existing,
+      ...updateDto,
+    };
+
+    return await this.planetRepository.save(update);
+  }
+
+  /**
+   * function deletes a record in the planets table
+   * @param id ID of the planet to be deleted
+   * @returns true if the deletion is successful, false if not
+   */
+  async delete(id: number) {
+    const result = await this.planetRepository.delete(id);
+    return result.affected !== 0;
+  }
+}
