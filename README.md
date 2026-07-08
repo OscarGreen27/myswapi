@@ -47,11 +47,13 @@ createdb starwars
 psql -U postgres -d starwars < backup/1.sw.sql
 psql -U postgres -d starwars < backup/2.image.sql
 psql -U postgres -d starwars < backup/3.user.sql
+```
 
 Note
 
->The image and user backups create empty tables only. The application starts with all Star Wars data already imported while user accounts >and uploaded images can be created during normal usage.
-```
+>The image and user backups create empty tables only. 
+>The application starts with all Star Wars data already imported while user accounts and uploaded images can be created during normal usage.
+
 
 ### Environment Variables
 
